@@ -85,15 +85,6 @@ func ValidateAddress(address string) bool {
 
 // /  获取账户地址
 func GetAddress(c *gin.Context) {
-	defer func() {
-		err := recover()
-		if err != nil {
-			gormResponse.Code = http.StatusBadRequest
-			gormResponse.Message = "错误"
-			gormResponse.Data = err
-			c.JSON(http.StatusBadRequest, gormResponse)
-		}
-	}()
 	w := NewWallet()
 	gormResponse.Code = http.StatusOK
 	gormResponse.Message = w.GetAddress()

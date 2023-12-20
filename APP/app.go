@@ -44,18 +44,18 @@ func run() error {
 	a := &api.Api{Version: "1.0"}
 	r := setupRouter()
 	r.GET("/hello", a.Getid)
-	//r.POST("sql/insert", model.InsertData)   //添加数据
-	//r.GET("sql/get", model.GetData)          //查询数据（单条记录）
-	//r.GET("sql/mulget", model.GetMulData)    //查询数据（多条记录）
-	//r.PUT("sql/update", model.UpdateData)    //更新数据
-	//r.DELETE("sql/delete", model.DeleteData) //删除数据
-	////数据库的CRUD--->gin的 post、get、put、delete方法
 	r.POST("gorm/insert", model.GormInsertData) //添加数据
 	r.GET("gorm/get", model.GormGetData)        //查询数据（单条记录）
 	r.POST("gorm/delete", model.GormDeleteData) //添加数据
 	r.GET("gorm/getaddress", api.GetAddress)
 	if err := r.Run("0.0.0.0:8100"); err != nil {
 		fmt.Println("startup service failed, err:%v\n", err)
+		//r.POST("sql/insert", model.InsertData)   //添加数据
+		//r.GET("sql/get", model.GetData)          //查询数据（单条记录）
+		//r.GET("sql/mulget", model.GetMulData)    //查询数据（多条记录）
+		//r.PUT("sql/update", model.UpdateData)    //更新数据
+		//r.DELETE("sql/delete", model.DeleteData) //删除数据
+		////数据库的CRUD--->gin的 post、get、put、delete方法
 	}
 	return nil
 }
