@@ -9,7 +9,6 @@ import (
 	_ "github.com/btcsuite/btcutil/base58"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/ripemd160"
-	"math/big"
 	"net/http"
 )
 
@@ -57,14 +56,11 @@ func (w Wallet) GetAddress() string {
 	checksum := checksum(versionedPayload)
 	fullPayload := append(versionedPayload, checksum...)
 	address := base58.Encode(fullPayload)
-
-	//address := Base58Encode(fullPayload)
 	return address
 }
 
 func HashPubKey(pubKey []byte) []byte {
 	publicSHA256 := sha256.Sum256(pubKey)
-
 	RIPEMD160Hasher := ripemd160.New()
 	RIPEMD160Hasher.Write(publicSHA256[:])
 	publicRIPEMD160 := RIPEMD160Hasher.Sum(nil)
@@ -74,63 +70,21 @@ func HashPubKey(pubKey []byte) []byte {
 func checksum(payload []byte) []byte {
 	firstSHA := sha256.Sum256(payload)
 	secondSHA := sha256.Sum256(firstSHA[:])
-
 	return secondSHA[:AddressChecksumLen]
 }
 
-func Base58Encode(input []byte) []byte {
-	var result []byte
-	x := big.NewInt(0).SetBytes(input)
-	base := big.NewInt(int64(len(b58Alphabet)))
-	zero := big.NewInt(0)
-	mod := &big.Int{}
-	for x.Cmp(zero) != 0 {
-		x.DivMod(x, base, mod)
-		result = append(result, b58Alphabet[mod.Int64()])
-	}
-	//ReverseBytes(result)
-	for b := range input {
-		if b == 0x00 {
-			result = append([]byte{b58Alphabet[0]}, result...)
-		} else {
-			break
-		}
-	}
-	return result
-}
-
-// Base58转字节数组，解密
-func Base58Decode(input []byte) []byte {
-	result := big.NewInt(0)
-	zeroBytes := 0
-	for b := range input {
-		if b == 0x00 {
-			zeroBytes++
-		}
-	}
-	payload := input[zeroBytes:]
-	for _, b := range payload {
-		charIndex := bytes.IndexByte(b58Alphabet, b)
-		result.Mul(result, big.NewInt(58))
-		result.Add(result, big.NewInt(int64(charIndex)))
-	}
-	decoded := result.Bytes()
-	//decoded...表示将decoded所有字节追加
-	decoded = append(bytes.Repeat([]byte{byte(0x00)}, zeroBytes), decoded...)
-	return decoded
-}
-
+// /  验证地址是否合法
 func ValidateAddress(address string) bool {
 	pubKeyHash := base58.Decode(address)
 	actualChecksum := pubKeyHash[len(pubKeyHash)-AddressChecksumLen:]
 	version := pubKeyHash[0]
 	pubKeyHash = pubKeyHash[1 : len(pubKeyHash)-AddressChecksumLen]
 	targetChecksum := checksum(append([]byte{version}, pubKeyHash...))
-
 	return bytes.Compare(actualChecksum, targetChecksum) == 0
 }
-func GetAddress(c *gin.Context) {
 
+// /  获取账户地址
+func GetAddress(c *gin.Context) {
 	defer func() {
 		err := recover()
 		if err != nil {
@@ -140,7 +94,6 @@ func GetAddress(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gormResponse)
 		}
 	}()
-
 	w := NewWallet()
 	gormResponse.Code = http.StatusOK
 	gormResponse.Message = w.GetAddress()
