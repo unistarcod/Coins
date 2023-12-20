@@ -53,6 +53,7 @@ func run() error {
 	r.POST("gorm/insert", model.GormInsertData) //添加数据
 	r.GET("gorm/get", model.GormGetData)        //查询数据（单条记录）
 	r.POST("gorm/delete", model.GormDeleteData) //添加数据
+	r.GET("gorm/getaddress", api.GetAddress)
 	if err := r.Run(); err != nil {
 		fmt.Println("startup service failed, err:%v\n", err)
 	}

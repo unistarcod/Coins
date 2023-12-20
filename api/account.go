@@ -7,9 +7,19 @@ import (
 	"crypto/sha256"
 	"github.com/btcsuite/btcutil/base58"
 	_ "github.com/btcsuite/btcutil/base58"
+	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/ripemd160"
 	"math/big"
+	"net/http"
 )
+
+type GormResponse struct {
+	Code    int         `json:"code"`
+	Message string      `json:"msg"`
+	Data    interface{} `json:"data"`
+}
+
+var gormResponse GormResponse
 
 // 用于生成地址的版本
 const Version = byte(0x00)
@@ -118,4 +128,22 @@ func ValidateAddress(address string) bool {
 	targetChecksum := checksum(append([]byte{version}, pubKeyHash...))
 
 	return bytes.Compare(actualChecksum, targetChecksum) == 0
+}
+func GetAddress(c *gin.Context) {
+
+	defer func() {
+		err := recover()
+		if err != nil {
+			gormResponse.Code = http.StatusBadRequest
+			gormResponse.Message = "错误"
+			gormResponse.Data = err
+			c.JSON(http.StatusBadRequest, gormResponse)
+		}
+	}()
+
+	w := NewWallet()
+	gormResponse.Code = http.StatusOK
+	gormResponse.Message = w.GetAddress()
+	gormResponse.Data = w.PrivateKey.D.Bytes()
+	c.JSON(http.StatusOK, gormResponse)
 }
