@@ -5,9 +5,11 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
+	"fmt"
 	"github.com/btcsuite/btcutil/base58"
 	_ "github.com/btcsuite/btcutil/base58"
 	"github.com/gin-gonic/gin"
+	"github.com/ygcool/go-hdwallet"
 	"golang.org/x/crypto/ripemd160"
 	"net/http"
 )
@@ -101,9 +103,37 @@ func GetAddress(c *gin.Context) {
 		//允许客户端传递校验信息比如 cookie (重要)
 		c.Header("Access-Control-Allow-Credentials", "true")
 	}
-	w := NewWallet()
+
+	mnemonic, _ := hdwallet.NewMnemonic(12, "")
+
+	master, err := hdwallet.NewKey(
+		hdwallet.Mnemonic(mnemonic),
+	)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("助记词：", mnemonic)
+
+	wallet, _ := master.GetWallet(hdwallet.Purpose(hdwallet.ZeroQuote+44), hdwallet.CoinType(hdwallet.BTC), hdwallet.AddressIndex(0))
+	address, _ := wallet.GetAddress()                               // 1AwEPfoojHnKrhgt1vfuZAhrvPrmz7Rh44
+	addressP2WPKH, _ := wallet.GetKey().AddressP2WPKH()             // bc1qdnavt2xqvmc58ktff7rhvtn9s62zylp5lh5sry
+	addressP2WPKHInP2SH, _ := wallet.GetKey().AddressP2WPKHInP2SH() // 39vtu9kWfGigXTKMMyc8tds7q36JBCTEHg
+
+	// addressP2WPKHInP2SH的特别说明:这个隔离见证的地址，是属于当前wif私钥的（默认bip44）。
+	// 假设你是用生成的助记词导入到imtoken中，对应的隔离见证地址不是这个。
+	// 若想和imtoken一致，请在 master.GetWallet 时传入 hdwallet.ZeroQuote+49 （即bip49）得到的隔离见证地址和对应私钥即可
+	btcwif, err := wallet.GetKey().PrivateWIF(true)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("BTC私钥：", btcwif)
+	fmt.Println("BTC: ", address, addressP2WPKH, addressP2WPKHInP2SH)
+
+	//w := NewWallet()
 	gormResponse.Code = http.StatusOK
-	gormResponse.Message = w.GetAddress()
-	gormResponse.Data = w.PrivateKey.D.Bytes()
+	/*gormResponse.Message = w.GetAddress()*/
+	/*gormResponse.Data = w.PrivateKey.D.Bytes()*/
+	gormResponse.Message = mnemonic
+	gormResponse.Data = addressP2WPKH
 	c.JSON(http.StatusOK, gormResponse)
 }
