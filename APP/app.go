@@ -102,12 +102,18 @@ func Cors() gin.HandlerFunc {
 			c.Header("Access-Control-Max-Age", "172800")
 			//允许客户端传递校验信息比如 cookie (重要)
 			c.Header("Access-Control-Allow-Credentials", "true")
+			//
+			//c.Header("Content-Type", "application/json")
 		}
 		//允许类型校验
 		if method == "OPTIONS" {
-			c.JSON(http.StatusOK, "ok!")
+			c.Header("Access-Control-Allow-Origin", "*")
+			c.Header("Access-Control-Allow-Headers", "Content-Type,AccessToken,X-CSRF-Token, Authorization") //自定义 Header
+			c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+			c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type")
+			c.Header("Access-Control-Allow-Credentials", "true")
+			c.AbortWithStatus(http.StatusNoContent)
 		}
-
 		defer func() {
 			if err := recover(); err != nil {
 				log.Printf("Panic info is: %v", err)
