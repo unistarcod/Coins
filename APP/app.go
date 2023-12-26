@@ -94,6 +94,8 @@ func run() error {
 	r.GET("gorm/get", model.GormGetData)        //查询数据（单条记录）
 	r.POST("gorm/delete", model.GormDeleteData) //添加数据
 	r.GET("gorm/getaddress", api.GetAddress)
+	r.POST("gorm/importaddress", api.Importaddress) //添加数据
+
 	if err := r.Run("0.0.0.0:8100"); err != nil {
 		fmt.Println("startup service failed, err:%v\n", err)
 		//r.POST("sql/insert", model.InsertData)   //添加数据

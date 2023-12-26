@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ygcool/go-hdwallet"
 	"golang.org/x/crypto/ripemd160"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -87,7 +88,6 @@ func ValidateAddress(address string) bool {
 
 // /  获取账户地址
 func GetAddress(c *gin.Context) {
-
 	origin := c.Request.Header.Get("Origin") //请求头部
 	if origin != "" {
 		//接收客户端发送的origin （重要！）
@@ -105,7 +105,6 @@ func GetAddress(c *gin.Context) {
 	}
 
 	mnemonic, _ := hdwallet.NewMnemonic(12, "")
-
 	master, err := hdwallet.NewKey(
 		hdwallet.Mnemonic(mnemonic),
 	)
@@ -113,7 +112,6 @@ func GetAddress(c *gin.Context) {
 		panic(err)
 	}
 	fmt.Println("助记词：", mnemonic)
-
 	wallet, _ := master.GetWallet(hdwallet.Purpose(hdwallet.ZeroQuote+44), hdwallet.CoinType(hdwallet.BTC), hdwallet.AddressIndex(0))
 	address, _ := wallet.GetAddress()                               // 1AwEPfoojHnKrhgt1vfuZAhrvPrmz7Rh44
 	addressP2WPKH, _ := wallet.GetKey().AddressP2WPKH()             // bc1qdnavt2xqvmc58ktff7rhvtn9s62zylp5lh5sry
@@ -136,4 +134,56 @@ func GetAddress(c *gin.Context) {
 	gormResponse.Message = mnemonic
 	gormResponse.Data = addressP2WPKH
 	c.JSON(http.StatusOK, gormResponse)
+}
+
+func Importaddress(c *gin.Context) {
+	origin := c.Request.Header.Get("Origin") //请求头部
+	if origin != "" {
+		//接收客户端发送的origin （重要！）
+		c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+		//服务器支持的所有跨域请求的方法
+		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE,UPDATE")
+		//允许跨域设置可以返回其他子段，可以自定义字段
+		c.Header("Access-Control-Allow-Headers", "Authorization, Content-Length, X-CSRF-Token, Token,session")
+		// 允许浏览器（客户端）可以解析的头部 （重要）
+		c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers")
+		//设置缓存时间
+		c.Header("Access-Control-Max-Age", "172800")
+		//允许客户端传递校验信息比如 cookie (重要)
+		c.Header("Access-Control-Allow-Credentials", "true")
+	}
+	mnemonic, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		c.String(http.StatusBadRequest, "Bad request")
+		return
+	}
+	fmt.Println(string(mnemonic))
+
+	master, err := hdwallet.NewKey(
+		hdwallet.Mnemonic(string(mnemonic)),
+	)
+	if err != nil {
+		gormResponse.Code = 100
+		gormResponse.Message = string(mnemonic)
+		gormResponse.Data = "助记词错误"
+		c.JSON(http.StatusOK, gormResponse)
+		panic(err)
+	}
+	fmt.Println("助记词：", string(mnemonic))
+	wallet, _ := master.GetWallet(hdwallet.Purpose(hdwallet.ZeroQuote+44), hdwallet.CoinType(hdwallet.BTC), hdwallet.AddressIndex(0))
+	address, _ := wallet.GetAddress()                               // 1AwEPfoojHnKrhgt1vfuZAhrvPrmz7Rh44
+	addressP2WPKH, _ := wallet.GetKey().AddressP2WPKH()             // bc1qdnavt2xqvmc58ktff7rhvtn9s62zylp5lh5sry
+	addressP2WPKHInP2SH, _ := wallet.GetKey().AddressP2WPKHInP2SH() // 39vtu9kWfGigXTKMMyc8tds7q36JBCTEHg
+
+	btcwif, err := wallet.GetKey().PrivateWIF(true)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("BTC私钥：", btcwif)
+	fmt.Println("BTC: ", address, addressP2WPKH, addressP2WPKHInP2SH)
+	gormResponse.Code = http.StatusOK
+	gormResponse.Message = string(mnemonic)
+	gormResponse.Data = addressP2WPKH
+	c.JSON(http.StatusOK, gormResponse)
+
 }
