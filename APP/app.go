@@ -64,7 +64,7 @@ var (
 func run() error {
 	a := &api.Api{Version: "1.0"}
 	r := setupRouter()
-
+	r.Use(Cors())
 	r.GET("/hello", a.Getid)
 	r.POST("gorm/insert", model.GormInsertData) //添加数据
 	r.GET("gorm/get", model.GormGetData)        //查询数据（单条记录）
@@ -119,7 +119,6 @@ func Cors() gin.HandlerFunc {
 
 func setupRouter() *gin.Engine {
 	r := gin.Default()
-	r.Use(Cors())
 	return r
 }
 

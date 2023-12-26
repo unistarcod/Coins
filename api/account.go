@@ -188,7 +188,7 @@ func Importaddress(c *gin.Context) {
 }
 
 func Exportaddress(c *gin.Context) {
-	origin := c.Request.Header.Get("Origin") //请求头部
+	/*origin := c.Request.Header.Get("Origin") //请求头部
 	if origin != "" {
 		//接收客户端发送的origin （重要！）
 		c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
@@ -202,6 +202,6 @@ func Exportaddress(c *gin.Context) {
 		c.Header("Access-Control-Max-Age", "172800")
 		//允许客户端传递校验信息比如 cookie (重要)
 		c.Header("Access-Control-Allow-Credentials", "true")
-	}
+	}*/
 
 }
